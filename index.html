@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>User Data Requisition Application</title>
+		<!-- Tailwind CSS CDN -->
+		<script src="https://cdn.tailwindcss.com"></script>
+		<!-- Google Fonts - Inter -->
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			/* Base styles for the entire page, using Inter font and a soft gradient background */
+			body {
+				font-family: "Inter", sans-serif;
+				margin: 0;
+				padding: 0;
+				min-height: 100vh;
+				display: flex; /* Use flexbox to center content vertically and horizontally */
+				align-items: center; /* Center vertically */
+				justify-content: center; /* Center horizontally */
+				background: linear-gradient(
+					to bottom right,
+					#e0f2fe,
+					#bfdbfe
+				); /* Soft blue gradient background */
+			}
+
+			/* Container for central content, ensuring it takes full width and centers items */
+			.container-center {
+				display: flex;
+				flex-direction: column; /* Stack heading and card/sections vertically */
+				align-items: center; /* Center items horizontally within the container */
+				justify-content: center; /* Center items vertically within the container */
+				min-height: 100vh; /* Ensure it takes full viewport height */
+				padding: 2rem; /* Consistent padding around the content */
+				width: 100%; /* Take full width for responsiveness */
+			}
+
+			/* Styling for card-like elements (e.g., login form, individual requisitions) */
+			.card {
+				background-color: #ffffff;
+				padding: 2.5rem; /* Generous padding inside the card */
+				border-radius: 1.25rem; /* Significantly rounded corners for a modern look */
+				box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+					0 8px 10px -6px rgba(0, 0, 0, 0.1); /* Stronger, deeper shadow */
+				border: 1px solid #e2e8f0; /* Subtle light gray border */
+				width: 100%; /* Take full width up to max-width */
+				max-width: 32rem; /* Max width for desktop, scales down on smaller screens */
+				transform: translateY(0); /* Initial state for hover animation */
+				transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out; /* Smooth transitions for hover effects */
+			}
+			.card:hover {
+				transform: translateY(-5px); /* Lift effect on hover */
+				box-shadow: 0 25px 35px -8px rgba(0, 0, 0, 0.15),
+					0 10px 12px -8px rgba(0, 0, 0, 0.1); /* Enhanced shadow on hover */
+			}
+
+			/* Styling for all input fields and text areas */
+			.input-field {
+				margin-top: 0.25rem; /* Small margin above the input */
+				display: block; /* Make it a block-level element for full width */
+				width: 100%; /* Full width within its parent */
+				padding: 0.75rem 1rem; /* Comfortable padding inside for easy tapping/clicking */
+				border: 1px solid #cbd5e1; /* Medium gray border */
+				border-radius: 0.75rem; /* Rounded corners for inputs */
+				box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* Subtle inner shadow for depth */
+				font-size: 1rem; /* Standard font size for readability */
+				transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth transition for focus states */
+			}
+			.input-field:focus {
+				outline: none; /* Remove default outline */
+				border-color: #3b82f6; /* Blue border on focus */
+				box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); /* Blue ring effect on focus */
+			}
+
+			/* Primary button styling */
+			.btn-primary {
+				width: 100%; /* Full width within its parent */
+				display: flex; /* Use flexbox for centering text within the button */
+				justify-content: center; /* Center text horizontally */
+				padding: 0.85rem 1rem; /* Ample padding for touch targets */
+				border: none; /* No default border */
+				border-radius: 0.75rem; /* Rounded corners */
+				font-size: 1.125rem; /* Larger font size (text-lg) */
+				font-weight: 700; /* Bold font weight (font-bold) */
+				color: #ffffff; /* White text color */
+				background: linear-gradient(
+					to right,
+					#3b82f6,
+					#2563eb
+				); /* Blue gradient background */
+				box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.5),
+					0 2px 4px -1px rgba(59, 130, 246, 0.3); /* Blue shadow */
+				transition: all 0.2s ease-in-out; /* Smooth transitions for hover effects */
+				cursor: pointer; /* Indicate it's clickable */
+			}
+			.btn-primary:hover {
+				background: linear-gradient(
+					to right,
+					#2563eb,
+					#1e40af
+				); /* Darker blue gradient on hover */
+				box-shadow: 0 6px 10px -2px rgba(59, 130, 246, 0.6),
+					0 3px 6px -2px rgba(59, 130, 246, 0.4); /* Enhanced shadow on hover */
+				transform: translateY(-2px); /* Lift effect on hover */
+			}
+
+			/* Secondary button styling (e.g., logout, cancel) */
+			.btn-secondary {
+				padding: 0.75rem 1.5rem; /* Good padding for touch targets */
+				background-color: #6b7280; /* Medium gray background */
+				color: #ffffff; /* White text color */
+				font-weight: 600; /* Semi-bold font weight */
+				border-radius: 0.75rem; /* Rounded corners */
+				box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+					0 2px 4px -1px rgba(0, 0, 0, 0.06); /* Subtle shadow */
+				transition: all 0.2s ease-in-out; /* Smooth transitions for hover effects */
+				cursor: pointer; /* Indicate it's clickable */
+			}
+			.btn-secondary:hover {
+				background-color: #4b5563; /* Darker gray on hover */
+				transform: translateY(-1px); /* Slight lift effect on hover */
+				box-shadow: 0 6px 10px -2px rgba(0, 0, 0, 0.15),
+					0 3px 6px -2px rgba(0, 0, 0, 0.08); /* Enhanced shadow on hover */
+			}
+
+			/* Styling for role-specific content sections (e.g., requisition forms, inboxes) */
+			.role-section {
+				background-color: #ffffff;
+				padding: 2rem; /* Consistent padding */
+				border-radius: 1.25rem; /* Rounded corners */
+				box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+					0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Standard shadow */
+				width: 100%; /* Take full width up to max-width */
+				max-width: 48rem; /* Wider section for content-heavy pages */
+				margin-top: 2.5rem; /* Space from the element above */
+			}
+
+			/* Status indicator colors for requisitions */
+			.status-pending {
+				color: #d97706; /* Amber-like color */
+				font-weight: 600;
+			}
+			.status-approved {
+				color: #16a34a; /* Green color */
+				font-weight: 600;
+			}
+			.status-denied {
+				color: #dc2626; /* Red color */
+				font-weight: 600;
+			}
+
+			/* Main application heading styling */
+			.main-app-heading {
+				color: #1d4ed8; /* A darker, prominent blue */
+				font-size: 3rem; /* Large font size (text-5xl) */
+				font-weight: 900; /* Extra bold font weight (font-extrabold) */
+				text-align: center; /* Center align text */
+				margin-bottom: 2rem; /* Space below the heading */
+				text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1); /* Subtle text shadow for depth */
+				letter-spacing: -0.025em; /* Slightly tighter letter spacing */
+				line-height: 1.2; /* Slightly reduced line height */
+				padding: 0 1rem; /* Ensures padding on smaller screens to prevent text from touching edges */
+			}
+
+			/* Responsive adjustments for smaller screens (e.g., mobile) */
+			@media (max-width: 640px) {
+				/* Applies when screen width is 640px or less */
+				.main-app-heading {
+					font-size: 2.25rem; /* Smaller font size (text-4xl) for mobile */
+					margin-bottom: 1.5rem; /* Reduced margin */
+				}
+				.card {
+					padding: 1.5rem; /* Reduced padding for smaller screens */
+				}
+				.role-section {
+					padding: 1.25rem; /* Reduced padding for smaller screens */
+				}
+			}
+
+			/* Modal specific styles for the overlay and content */
+			.modal-overlay {
+				position: fixed; /* Fixed position to cover the entire viewport */
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background-color: rgba(
+					0,
+					0,
+					0,
+					0.5
+				); /* Semi-transparent black overlay */
+				display: flex; /* Flexbox for centering modal content */
+				align-items: center; /* Center vertically */
+				justify-content: center; /* Center horizontally */
+				z-index: 1000; /* High z-index to appear on top */
+				opacity: 0; /* Initially hidden */
+				visibility: hidden; /* Initially not visible */
+				transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out; /* Smooth fade-in/out transition */
+			}
+			.modal-overlay.show {
+				opacity: 1; /* Fully visible when 'show' class is added */
+				visibility: visible;
+			}
+			.modal-content {
+				background-color: #ffffff; /* White background */
+				padding: 2.5rem; /* Generous padding */
+				border-radius: 1.25rem; /* Rounded corners */
+				box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); /* Stronger shadow */
+				width: 90%; /* Take 90% width on smaller screens */
+				max-width: 28rem; /* Max width for desktop */
+				transform: translateY(-20px); /* Slightly move up for enter animation */
+				transition: transform 0.3s ease-in-out; /* Smooth animation for vertical movement */
+			}
+			.modal-overlay.show .modal-content {
+				transform: translateY(
+					0
+				); /* Move to original position when 'show' class is added */
+			}
+		</style>
+	</head>
+	<body>
+		<div id="app-root">
+			<!-- Content will be rendered here by JavaScript -->
+			<div class="container-center" id="loading-screen">
+				<p class="text-xl text-gray-700">Loading application...</p>
+			</div>
+		</div>
+
+		<!-- Change Password Modal -->
+		<div id="change-password-modal" class="modal-overlay">
+			<div class="modal-content">
+				<h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+					Change Password
+				</h3>
+				<form id="change-password-form" class="space-y-4">
+					<div>
+						<label
+							for="currentPassword"
+							class="block text-sm font-medium text-gray-700 mb-1"
+							>Current Password</label
+						>
+						<input
+							type="password"
+							id="currentPassword"
+							class="input-field"
+							required
+						/>
+					</div>
+					<div>
+						<label
+							for="newPassword"
+							class="block text-sm font-medium text-gray-700 mb-1"
+							>New Password</label
+						>
+						<input
+							type="password"
+							id="newPassword"
+							class="input-field"
+							required
+						/>
+					</div>
+					<div>
+						<label
+							for="confirmNewPassword"
+							class="block text-sm font-medium text-gray-700 mb-1"
+							>Confirm New Password</label
+						>
+						<input
+							type="password"
+							id="confirmNewPassword"
+							class="input-field"
+							required
+						/>
+					</div>
+					<p id="password-change-message" class="text-center text-sm mt-2"></p>
+					<div class="flex justify-end space-x-3 mt-6">
+						<button
+							type="button"
+							id="cancel-password-change"
+							class="btn-secondary px-6"
+						>
+							Cancel
+						</button>
+						<button type="submit" class="btn-primary px-6">
+							Update Password
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+
+		<script type="module">
+			// --- Configuration ---
+			// Base URL for the Flask backend.
+			const API_BASE_URL = "http://127.0.0.1:5000/api";
+
+			// Global state variables for the current user and their role
+			// These will be persisted in localStorage
+			let currentUser = null; // Stores { cpfId, uid, name, email }
+			let currentRole = null;
+			let currentUserId = null;
+			let isAppReady = false; // Flag to indicate if the app has finished initial loading
+
+			// --- LocalStorage Keys ---
+			const LOCAL_STORAGE_USER_KEY = "currentUserData";
+			const LOCAL_STORAGE_ROLE_KEY = "currentUserRole";
+			const LOCAL_STORAGE_USERID_KEY = "currentUserId";
+
+			// --- Utility Functions ---
+
+			// Helper function to format date strings to DD.MM.YYYY for consistent display
+			function formatDateToDDMMYYYY(dateString) {
+				if (!dateString) {
+					return "N/A"; // Return "N/A" if the date string is null or empty
+				}
+				try {
+					// Attempt to parse the date string. Handles ISO 8601 (YYYY-MM-DDTHH:MM:SS.sssZ)
+					// or YYYY-MM-DD HH:MM:SS format, or just YYYY-MM-DD
+					const date = new Date(dateString);
+					if (isNaN(date.getTime())) {
+						// Check if the parsed date is invalid
+						// Fallback for YYYY-MM-DD if Date object fails for some reason
+						const [year, month, day] = dateString.split(" ")[0].split("-");
+						return `${day}.${month}.${year}`;
+					}
+					const day = String(date.getDate()).padStart(2, "0"); // Get day and pad with leading zero if needed
+					const month = String(date.getMonth() + 1).padStart(2, "0"); // Get month (0-indexed) and pad
+					const year = date.getFullYear(); // Get full year
+					return `${day}.${month}.${year}`; // Return formatted string
+				} catch (e) {
+					console.error("Error formatting date:", dateString, e);
+					return dateString; // Fallback to original string on error
+				}
+			}
+
+			// Saves current user session data to localStorage
+			function saveSessionToLocalStorage() {
+				localStorage.setItem(
+					LOCAL_STORAGE_USER_KEY,
+					JSON.stringify(currentUser)
+				);
+				localStorage.setItem(LOCAL_STORAGE_ROLE_KEY, currentRole);
+				localStorage.setItem(LOCAL_STORAGE_USERID_KEY, currentUserId);
+			}
+
+			// Loads user session data from localStorage
+			function loadSessionFromLocalStorage() {
+				const userData = localStorage.getItem(LOCAL_STORAGE_USER_KEY);
+				const userRole = localStorage.getItem(LOCAL_STORAGE_ROLE_KEY);
+				const userId = localStorage.getItem(LOCAL_STORAGE_USERID_KEY);
+
+				if (userData && userRole && userId) {
+					currentUser = JSON.parse(userData);
+					currentRole = userRole;
+					currentUserId = userId;
+					return true; // Session loaded successfully
+				}
+				return false; // No session found
+			}
+
+			// Clears user session data from localStorage
+			function clearSessionFromLocalStorage() {
+				localStorage.removeItem(LOCAL_STORAGE_USER_KEY);
+				localStorage.removeItem(LOCAL_STORAGE_ROLE_KEY);
+				localStorage.removeItem(LOCAL_STORAGE_USERID_KEY);
+			}
+
+			// --- UI Rendering Functions ---
+
+			// Renders the login form, handling potential error messages
+			function renderLoginForm(errorMessage = "") {
+				const appRoot = document.getElementById("app-root");
+				appRoot.innerHTML = `
+                <div class="container-center">
+                    <h1 class="main-app-heading">USER DATA REQUISITION</h1>
+                    <div class="card max-w-md">
+                        <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Login</h2>
+                        <form id="login-form" class="space-y-6">
+                            <div>
+                                <label for="cpfId" class="block text-sm font-medium text-gray-700 mb-1">CPF ID</label>
+                                <input type="text" id="cpfId" class="input-field" placeholder="Enter your CPF ID" required>
+                            </div>
+                            <div>
+                                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                <input type="password" id="password" class="input-field" placeholder="Enter your password" required>
+                            </div>
+                            ${
+															errorMessage
+																? `<p class="text-red-600 text-sm text-center">${errorMessage}</p>`
+																: ""
+														}
+                            <button type="submit" class="btn-primary">Sign In</button>
+                        </form>
+                    </div>
+                </div>
+            `;
+				// Attach event listener for form submission
+				document
+					.getElementById("login-form")
+					.addEventListener("submit", handleLogin);
+			}
+
+			// Renders the main dashboard after successful login, adapting to the user's role
+			function renderDashboard() {
+				const appRoot = document.getElementById("app-root");
+				appRoot.innerHTML = `
+                <div class="min-h-screen bg-gray-50 p-4 flex flex-col items-center">
+                    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-2xl text-center">
+                        <h1 class="text-4xl font-extrabold text-gray-900 mb-4">
+                            Welcome, <span class="text-blue-700">${
+															currentUser.name || currentUser.cpfId
+														}</span>!
+                        </h1>
+                        <p class="text-xl text-gray-600 mb-8">
+                            Your role is: <span class="font-semibold text-blue-700">${currentRole?.toUpperCase()}</span>
+                            <br />
+                            <span class="text-sm text-gray-500">User ID: <span class="font-medium">${currentUserId}</span></span>
+                            <br />
+                            <span class="text-sm text-gray-500">CPF ID: <span class="font-medium">${
+															currentUser.cpfId
+														}</span></span>
+                            ${
+															currentUser.email
+																? `<br /><span class="text-sm text-gray-500">Email: <span class="font-medium">${currentUser.email}</span></span>`
+																: ""
+														}
+                        </p>
+                        <div class="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4 mt-8">
+                            <button id="logout-button" class="btn-secondary">Logout</button>
+                            <button id="change-password-btn" class="btn-secondary bg-blue-500 hover:bg-blue-600">Change Password</button>
+                        </div>
+                    </div>
+                    <div id="role-specific-content" class="w-full max-w-2xl"></div>
+                </div>
+            `;
+				// Attach event listeners for logout and password change buttons
+				document
+					.getElementById("logout-button")
+					.addEventListener("click", handleLogout);
+				document
+					.getElementById("change-password-btn")
+					.addEventListener("click", showChangePasswordModal);
+
+				const roleSpecificContentDiv = document.getElementById(
+					"role-specific-content"
+				);
+				// Render content specific to the user's role
+				if (currentRole === "level1") {
+					renderLevel1RequisitionCreator(roleSpecificContentDiv);
+				} else if (currentRole === "level2") {
+					renderLevel2ApprovalInbox(roleSpecificContentDiv);
+				} else if (currentRole === "level3") {
+					renderLevel3Mailbox(roleSpecificContentDiv);
+				} else if (currentRole === "admin") {
+					renderAdminPanel(roleSpecificContentDiv);
+				}
+			}
+
+			// Renders the requisition creation form for Level 1 users
+			function renderLevel1RequisitionCreator(parentDiv) {
+				parentDiv.innerHTML = `
+                <div class="role-section">
+                    <h3 class="text-2xl font-bold text-blue-800 mb-4">Create New Requisition</h3>
+                    <form id="requisition-form" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="reqDate" class="block text-sm font-medium text-gray-700">Date of Requisition</label>
+                                <input type="date" id="reqDate" class="input-field">
+                            </div>
+                            <div>
+                                <label for="reqBasin" class="block text-sm font-medium text-gray-700">Basin <span class="text-red-500">*</span></label>
+                                <input type="text" id="reqBasin" class="input-field" required>
+                            </div>
+                            <div>
+                                <label for="reqBlock" class="block text-sm font-medium text-gray-700">Block</label>
+                                <input type="text" id="reqBlock" class="input-field">
+                            </div>
+                            <div>
+                                <label for="reqArea" class="block text-sm font-medium text-gray-700">Area</label>
+                                <input type="text" id="reqArea" class="input-field">
+                            </div>
+                            <div>
+                                <label for="req2D3D" class="block text-sm font-medium text-gray-700">2D/3D</label>
+                                <input type="text" id="req2D3D" class="input-field" placeholder="e.g., 2D or 3D">
+                            </div>
+                            <div>
+                                <label for="reqReturnDate" class="block text-sm font-medium text-gray-700">Return Date (Data to GMS)</label>
+                                <input type="date" id="reqReturnDate" class="input-field">
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <label for="reqDataType" class="block text-sm font-medium text-gray-700">Type of Data Required</label>
+                            <textarea id="reqDataType" rows="3" class="input-field" placeholder="e.g., Field data / Pre-migrated gather / PSTN gathers / Stack Data / Observers' logs / Velocity / Reports etc."></textarea>
+                        </div>
+                        <div>
+                            <label for="reqObjective" class="block text-sm font-medium text-gray-700">Objective</label>
+                            <textarea id="reqObjective" rows="3" class="input-field"></textarea>
+                        </div>
+                        <div>
+                            <label for="reqRemarks" class="block text-sm font-medium text-gray-700">Remarks</label>
+                            <textarea id="reqRemarks" rows="3" class="input-field"></textarea>
+                        </div>
+
+                        <h4 class="text-xl font-semibold text-blue-700 mt-6 mb-3">User Details</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="userName" class="block text-sm font-medium text-gray-700">Name</label>
+                                <input type="text" id="userName" class="input-field" value="${
+																	currentUser.name || ""
+																}">
+                            </div>
+                            <div>
+                                <label for="userDesignation" class="block text-sm font-medium text-gray-700">Designation</label>
+                                <input type="text" id="userDesignation" class="input-field">
+                            </div>
+                            <div>
+                                <label for="userCPFNo" class="block text-sm font-medium text-gray-700">CPF No. <span class="text-red-500">*</span></label>
+                                <input type="text" id="userCPFNo" class="input-field" value="${
+																	currentUser.cpfId || ""
+																}" required>
+                            </div>
+                            <div>
+                                <label for="userMobileNo" class="block text-sm font-medium text-gray-700">Mobile No. <span class="text-red-500">*</span></label>
+                                <input type="tel" id="userMobileNo" class="input-field" required>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="userGroup" class="block text-sm font-medium text-gray-700">Group <span class="text-red-500">*</span></label>
+                                <input type="text" id="userGroup" class="input-field" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Submit Requisition
+                        </button>
+                        <p id="requisition-message" class="text-center text-sm mt-2"></p>
+                    </form>
+
+                    <h3 class="text-2xl font-bold text-blue-800 mt-8 mb-4">Your Submitted Requisitions</h3>
+                    <div id="user-requisitions-list" class="space-y-4">
+                        <p class="text-gray-600">Loading your requisitions...</p>
+                    </div>
+                </div>
+            `;
+				document
+					.getElementById("requisition-form")
+					.addEventListener("submit", handleSubmitRequisition);
+				fetchLevel1Requisitions(); // Fetch requisitions upon rendering the form
+			}
+
+			// Renders the approval inbox for Level 2 users
+			function renderLevel2ApprovalInbox(parentDiv) {
+				parentDiv.innerHTML = `
+                <div class="role-section">
+                    <h3 class="text-2xl font-bold text-green-800 mb-4">Level 2 Approval Inbox</h3>
+                    <div id="pending-requisitions-list" class="space-y-4">
+                        <p class="text-gray-600">Loading pending requisitions...</p>
+                    </div>
+                    <p id="level2-message" class="text-center text-sm mt-2"></p>
+                </div>
+            `;
+				fetchLevel2Requisitions(); // Fetch pending requisitions upon rendering the inbox
+			}
+
+			// Renders the mailbox for Level 3 users, with filtering options
+			function renderLevel3Mailbox(parentDiv) {
+				parentDiv.innerHTML = `
+                <div class="role-section">
+                    <h3 class="text-2xl font-bold text-purple-800 mb-4">Level 3 Mailbox (Approved Requisitions)</h3>
+                    <div class="mb-4 space-y-3">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="filterBasin" class="block text-sm font-medium text-gray-700">Filter by Basin</label>
+                                <input type="text" id="filterBasin" class="input-field" placeholder="Enter Basin">
+                            </div>
+                            <div>
+                                <label for="filterGroup" class="block text-sm font-medium text-gray-700">Filter by Group</label>
+                                <input type="text" id="filterGroup" class="input-field" placeholder="Enter Group">
+                            </div>
+                        </div>
+                        <button id="apply-filter-btn" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Apply Filters
+                        </button>
+                    </div>
+                    <div id="approved-requisitions-list" class="space-y-4">
+                        <p class="text-gray-600">Loading approved requisitions...</p>
+                    </div>
+                    <p id="level3-message" class="text-center text-sm mt-2"></p>
+                </div>
+            `;
+				document
+					.getElementById("apply-filter-btn")
+					.addEventListener("click", fetchLevel3Requisitions);
+				fetchLevel3Requisitions(); // Initial fetch of approved requisitions
+			}
+
+			// Renders the admin panel for user management
+			function renderAdminPanel(parentDiv) {
+				parentDiv.innerHTML = `
+                <div class="role-section bg-red-50 border border-red-200">
+                    <h3 class="text-2xl font-bold text-red-800 mb-3">Admin Panel</h3>
+
+                    <div class="mt-6">
+                        <h4 class="text-xl font-semibold text-red-700 mb-3">Create New User Account</h4>
+                        <form id="create-user-form" class="space-y-4">
+                            <div>
+                                <label for="newName" class="block text-sm font-medium text-gray-700">Name</label>
+                                <input type="text" id="newName" class="input-field" placeholder="Enter user's name" required>
+                            </div>
+                            <div>
+                                <label for="newCpfId" class="block text-sm font-medium text-gray-700">CPF ID</label>
+                                <input type="text" id="newCpfId" class="input-field" placeholder="Enter user's CPF ID (e.g., 1002)" required>
+                            </div>
+                            <div>
+                                <label for="newEmail" class="block text-sm font-medium text-gray-700">Email (Optional)</label>
+                                <input type="email" id="newEmail" class="input-field" placeholder="newuser@example.com">
+                            </div>
+                            <div>
+                                <label for="newPassword" class="block text-sm font-medium text-gray-700">Password</label>
+                                <input type="password" id="newPassword" class="input-field" placeholder="min 6 characters" required>
+                            </div>
+                            <div>
+                                <label for="newUserRole" class="block text-sm font-medium text-gray-700">Assign Role</label>
+                                <select id="newUserRole" class="input-field" required>
+                                    <option value="">Select a role</option>
+                                    <option value="level1">Level 1</option>
+                                    <option value="level2">Level 2</option>
+                                    <option value="level3">Level 3</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                Create User
+                            </button>
+                            <p id="create-user-message" class="text-center text-sm mt-2"></p>
+                        </form>
+                    </div>
+
+                    <div class="mt-8">
+                        <h4 class="text-xl font-semibold text-red-700 mb-3">Existing Users</h4>
+                        <div id="existing-users-list" class="space-y-3">
+                            <p class="text-gray-600">Loading users...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+				document
+					.getElementById("create-user-form")
+					.addEventListener("submit", handleCreateUser);
+				fetchUserProfiles(); // Fetch all user profiles upon rendering the admin panel
+			}
+
+			// --- Authentication Logic ---
+
+			// Handles user login attempt
+			async function handleLogin(event) {
+				event.preventDefault(); // Prevent default form submission behavior
+				const cpfId = document.getElementById("cpfId").value;
+				const password = document.getElementById("password").value;
+
+				try {
+					// Send login credentials to the backend API
+					const response = await fetch(`${API_BASE_URL}/login`, {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ cpfId, password }),
+					});
+					const data = await response.json(); // Parse the JSON response
+					if (response.ok) {
+						// If login is successful, store user details and render the dashboard
+						currentUser = {
+							cpfId: data.cpfId,
+							uid: data.uid,
+							name: data.name,
+							email: data.email,
+						};
+						currentRole = data.role;
+						currentUserId = currentUser.uid;
+						saveSessionToLocalStorage(); // Persist session data
+						renderDashboard(); // Render dashboard on successful login
+					} else {
+						// If login fails, display the error message on the login form
+						renderLoginForm(data.message || "Login failed.");
+					}
+				} catch (error) {
+					console.error("Login fetch error:", error);
+					// Display a generic network error message if the backend is unreachable
+					renderLoginForm(
+						"Network error or backend not reachable. Is the Python server running?"
+					);
+				}
+			}
+
+			// Handles user logout
+			async function handleLogout() {
+				// Clear current user session data from memory and localStorage
+				currentUser = null;
+				currentRole = null;
+				currentUserId = null;
+				clearSessionFromLocalStorage(); // Clear persisted session
+				renderLoginForm(); // Redirect to login form
+			}
+
+			// Initial application load logic
+			window.onload = function () {
+				isAppReady = true; // Mark app as ready
+				const loadingScreen = document.getElementById("loading-screen");
+				if (loadingScreen) {
+					loadingScreen.remove(); // Remove loading screen
+				}
+
+				// Attempt to load session from localStorage
+				if (loadSessionFromLocalStorage()) {
+					renderDashboard(); // If session found, render dashboard directly
+				} else {
+					renderLoginForm(); // Otherwise, render the login form
+				}
+			};
+
+			// --- Admin User Creation Logic ---
+
+			// Handles creation of new user accounts by an Admin
+			async function handleCreateUser(event) {
+				event.preventDefault();
+				const name = document.getElementById("newName").value;
+				const cpfId = document.getElementById("newCpfId").value;
+				const email = document.getElementById("newEmail").value;
+				const password = document.getElementById("newPassword").value;
+				const role = document.getElementById("newUserRole").value;
+				const createUserMessage = document.getElementById(
+					"create-user-message"
+				);
+
+				createUserMessage.textContent = ""; // Clear previous messages
+
+				// Client-side validation for required fields and password length
+				if (!name || !cpfId || !password || !role) {
+					createUserMessage.textContent =
+						"Please fill in all required fields (Name, CPF ID, Password, Role).";
+					createUserMessage.className = "text-red-600 text-center text-sm mt-2";
+					return;
+				}
+				if (password.length < 6) {
+					createUserMessage.textContent =
+						"Password must be at least 6 characters long.";
+					createUserMessage.className = "text-red-600 text-center text-sm mt-2";
+					return;
+				}
+
+				try {
+					// Send new user data to the registration API
+					const response = await fetch(`${API_BASE_URL}/register`, {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							name,
+							cpfId,
+							email,
+							password,
+							role,
+							createdBy: currentUser.name || currentUser.cpfId,
+						}),
+					});
+					const data = await response.json();
+					if (response.ok) {
+						// On successful creation, display success message and clear form
+						createUserMessage.textContent = `User ${name} (CPF ID: ${cpfId}) created successfully with role ${role}!`;
+						createUserMessage.className =
+							"text-green-600 text-center text-sm mt-2";
+						document.getElementById("newName").value = "";
+						document.getElementById("newCpfId").value = "";
+						document.getElementById("newEmail").value = "";
+						document.getElementById("newPassword").value = "";
+						document.getElementById("newUserRole").value = "";
+						fetchUserProfiles(); // Refresh the list of existing users without logging out
+					} else {
+						// On failure, display error message
+						createUserMessage.textContent =
+							data.message || "Failed to create user.";
+						createUserMessage.className =
+							"text-red-600 text-center text-sm mt-2";
+					}
+				} catch (error) {
+					console.error("Create user fetch error:", error);
+					createUserMessage.textContent =
+						"Network error or backend not reachable.";
+					createUserMessage.className = "text-red-600 text-center text-sm mt-2";
+				}
+			}
+
+			// Fetches and displays all user profiles in the Admin panel
+			async function fetchUserProfiles() {
+				const existingUsersList = document.getElementById(
+					"existing-users-list"
+				);
+				if (!existingUsersList) return; // Exit if the element is not present
+				existingUsersList.innerHTML =
+					'<p class="text-gray-600">Loading users...</p>'; // Show loading message
+
+				try {
+					const response = await fetch(`${API_BASE_URL}/users`); // Fetch user data
+					const users = await response.json();
+					if (response.ok) {
+						if (users.length === 0) {
+							existingUsersList.innerHTML =
+								'<p class="text-gray-600">No users found.</p>';
+							return;
+						}
+						existingUsersList.innerHTML = ""; // Clear existing list
+						// Iterate and display each user profile
+						users.forEach((userProfile) => {
+							existingUsersList.innerHTML += `
+                            <div class="p-3 border border-gray-200 rounded-md bg-gray-50">
+                                <p class="font-semibold">${
+																	userProfile.name
+																} (CPF ID: ${userProfile.cpf_id})</p>
+                                ${
+																	userProfile.email
+																		? `<p class="text-sm text-gray-700">Email: ${userProfile.email}</p>`
+																		: ""
+																}
+                                <p class="text-sm text-gray-700">Role: <span class="font-medium">${userProfile.role.toUpperCase()}</span></p>
+                                <p class="text-xs text-gray-500">Created: ${formatDateToDDMMYYYY(
+																	userProfile.created_at
+																)}</p>
+                                <p class="text-xs text-gray-500">UID: ${
+																	userProfile.id
+																}</p>
+                            </div>
+                        `;
+						});
+					} else {
+						existingUsersList.innerHTML = `<p class="text-red-600">Error loading users: ${
+							users.message || "Backend error"
+						}</p>`;
+					}
+				} catch (error) {
+					console.error("Fetch user profiles error:", error);
+					existingUsersList.innerHTML =
+						'<p class="text-red-600">Network error or backend not reachable.</p>';
+				}
+			}
+
+			// --- Requisition Workflow Logic ---
+
+			// Handles submission of a new requisition by Level 1 user
+			async function handleSubmitRequisition(event) {
+				event.preventDefault();
+				const messageElement = document.getElementById("requisition-message");
+				messageElement.textContent = "";
+
+				// Collect all form data for the new requisition
+				const requisitionData = {
+					requisitionDate: document.getElementById("reqDate").value,
+					basin: document.getElementById("reqBasin").value,
+					block: document.getElementById("reqBlock").value,
+					area: document.getElementById("reqArea").value,
+					dimension: document.getElementById("req2D3D").value,
+					returnDate: document.getElementById("reqReturnDate").value,
+					dataType: document.getElementById("reqDataType").value,
+					objective: document.getElementById("reqObjective").value,
+					remarks: document.getElementById("reqRemarks").value,
+					userName: document.getElementById("userName").value,
+					userDesignation: document.getElementById("userDesignation").value,
+					userCPFNo: document.getElementById("userCPFNo").value,
+					userMobileNo: document.getElementById("userMobileNo").value,
+					userGroup: document.getElementById("userGroup").value,
+					requestedByUserId: currentUserId,
+					requestedByUserCpfId: currentUser.cpfId,
+				};
+
+				// Define mandatory fields for client-side validation
+				const requiredFields = [
+					"basin",
+					"userCPFNo",
+					"userMobileNo",
+					"userGroup",
+				];
+
+				// Perform client-side validation
+				for (const field of requiredFields) {
+					if (!requisitionData[field]) {
+						messageElement.textContent = `Please fill in the mandatory field: ${field
+							.replace(/([A-Z])/g, " $1")
+							.trim()}.`;
+						messageElement.className = "text-red-600 text-center text-sm mt-2";
+						return;
+					}
+				}
+
+				try {
+					// Send new requisition data to the backend API
+					const response = await fetch(`${API_BASE_URL}/requisitions`, {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify(requisitionData),
+					});
+					const data = await response.json();
+					if (response.ok) {
+						// On successful submission, display success message and clear form fields
+						messageElement.textContent = "Requisition submitted successfully!";
+						messageElement.className =
+							"text-green-600 text-center text-sm mt-2";
+						document.getElementById("reqDate").value = "";
+						document.getElementById("reqBasin").value = "";
+						document.getElementById("reqBlock").value = "";
+						document.getElementById("reqArea").value = "";
+						document.getElementById("req2D3D").value = "";
+						document.getElementById("reqReturnDate").value = "";
+						document.getElementById("reqDataType").value = "";
+						document.getElementById("reqObjective").value = "";
+						document.getElementById("reqRemarks").value = "";
+						document.getElementById("userName").value = currentUser.name || ""; // Keep user name if pre-filled
+						document.getElementById("userDesignation").value = "";
+						document.getElementById("userMobileNo").value = "";
+						document.getElementById("userGroup").value = "";
+						fetchLevel1Requisitions(); // Refresh the list of submitted requisitions without logging out
+					} else {
+						// On failure, display error message
+						messageElement.textContent =
+							data.message || "Failed to submit requisition.";
+						messageElement.className = "text-red-600 text-center text-sm mt-2";
+					}
+				} catch (error) {
+					console.error("Submit requisition fetch error:", error);
+					messageElement.textContent =
+						"Network error or backend not reachable.";
+					messageElement.className = "text-red-600 text-center text-sm mt-2";
+				}
+			}
+
+			// Fetches and displays requisitions submitted by the current Level 1 user
+			async function fetchLevel1Requisitions() {
+				const userRequisitionsList = document.getElementById(
+					"user-requisitions-list"
+				);
+				if (!userRequisitionsList) return;
+				userRequisitionsList.innerHTML =
+					'<p class="text-gray-600">Loading your requisitions...</p>';
+
+				try {
+					// Fetch requisitions filtered by the current user's ID
+					const response = await fetch(
+						`${API_BASE_URL}/requisitions?userId=${currentUserId}`
+					);
+					const requisitions = await response.json();
+					if (response.ok) {
+						if (requisitions.length === 0) {
+							userRequisitionsList.innerHTML =
+								'<p class="text-gray-600">No requisitions submitted yet.</p>';
+							return;
+						}
+						userRequisitionsList.innerHTML = ""; // Clear previous list
+						// Display each requisition with its status and formatted dates
+						requisitions.forEach((req) => {
+							const statusClass =
+								req.status === "pending_level2"
+									? "status-pending"
+									: req.status === "approved_level2"
+									? "status-approved"
+									: "status-denied";
+							userRequisitionsList.innerHTML += `
+                            <div class="p-4 border border-gray-200 rounded-lg shadow-sm">
+                                <p class="font-semibold text-lg">${
+																	req.title || `Requisition for ${req.basin}`
+																}</p>
+                                <p class="text-gray-700 text-sm">Objective: ${
+																	req.objective
+																}</p>
+                                <p class="text-gray-700 text-sm">Basin: ${
+																	req.basin
+																}, Block: ${req.block}, Area: ${req.area}</p>
+                                <p class="text-gray-700 text-sm">Data Type: ${
+																	req.data_type
+																}</p>
+                                <p class="mt-2 text-sm font-medium ${statusClass}">
+                                    Status: ${req.status
+																			.replace(/_/g, " ")
+																			.toUpperCase()}
+                                </p>
+                                <p class="text-xs text-gray-500">Requested by: ${
+																	req.user_name
+																} (CPF ID: ${
+								req.requested_by_user_cpf_id
+							}) on ${formatDateToDDMMYYYY(req.created_at)}</p>
+                            </div>
+                        `;
+						});
+					} else {
+						userRequisitionsList.innerHTML = `<p class="text-red-600">Error loading requisitions: ${
+							requisitions.message || "Backend error"
+						}</p>`;
+					}
+				} catch (error) {
+					console.error("Fetch Level 1 requisitions error:", error);
+					userRequisitionsList.innerHTML =
+						'<p class="text-red-600">Network error or backend not reachable.</p>';
+				}
+			}
+
+			// Fetches and displays requisitions pending approval for Level 2 users
+			async function fetchLevel2Requisitions() {
+				const pendingRequisitionsList = document.getElementById(
+					"pending-requisitions-list"
+				);
+				if (!pendingRequisitionsList) return;
+				pendingRequisitionsList.innerHTML =
+					'<p class="text-gray-600">Loading pending requisitions...</p>';
+
+				try {
+					// Fetch requisitions with 'pending_level2' status
+					const response = await fetch(
+						`${API_BASE_URL}/requisitions?status=pending_level2`
+					);
+					const requisitions = await response.json();
+					if (response.ok) {
+						if (requisitions.length === 0) {
+							pendingRequisitionsList.innerHTML =
+								'<p class="text-gray-600">No requisitions pending your approval.</p>';
+							return;
+						}
+						pendingRequisitionsList.innerHTML = ""; // Clear previous list
+						// Display each pending requisition with approve/deny buttons
+						requisitions.forEach((req) => {
+							const reqHtml = `
+                            <div class="p-4 border border-gray-200 rounded-lg shadow-sm">
+                                <p class="font-semibold text-lg">${
+																	req.title || `Requisition for ${req.basin}`
+																}</p>
+                                <p class="text-gray-700 text-sm">Objective: ${
+																	req.objective
+																}</p>
+                                <p class="text-gray-700 text-sm">Basin: ${
+																	req.basin
+																}, Block: ${req.block}, Area: ${req.area}</p>
+                                <p class="text-gray-700 text-sm">Data Type: ${
+																	req.data_type
+																}</p>
+                                <p class="text-xs text-gray-500">Requested by: ${
+																	req.user_name
+																} (CPF ID: ${
+								req.requested_by_user_cpf_id
+							}) on ${formatDateToDDMMYYYY(req.created_at)}</p>
+                                <div class="mt-4 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                                    <button data-id="${
+																			req.id
+																		}" data-decision="approve" class="py-2 px-4 bg-green-600 hover:bg-green-700 text-white rounded-md shadow-sm text-sm approve-deny-btn">
+                                        Approve
+                                    </button>
+                                    <button data-id="${
+																			req.id
+																		}" data-decision="deny" class="py-2 px-4 bg-red-600 hover:bg-red-700 text-white rounded-md shadow-sm text-sm approve-deny-btn">
+                                        Deny
+                                    </button>
+                                    <button data-id="${
+																			req.id
+																		}" class="download-pdf-btn py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-md shadow-sm text-sm">
+                                        Download PDF
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+							pendingRequisitionsList.insertAdjacentHTML("beforeend", reqHtml);
+						});
+
+						// Add event listeners to the newly created buttons
+						pendingRequisitionsList
+							.querySelectorAll(".approve-deny-btn")
+							.forEach((button) => {
+								button.addEventListener("click", async (e) => {
+									const requisitionId = e.target.dataset.id;
+									const decision = e.target.dataset.decision;
+									await handleDecision(requisitionId, decision);
+								});
+							});
+						pendingRequisitionsList
+							.querySelectorAll(".download-pdf-btn")
+							.forEach((button) => {
+								button.addEventListener("click", async (e) => {
+									const requisitionId = e.target.dataset.id;
+									await handleDownloadPdf(requisitionId);
+								});
+							});
+					} else {
+						pendingRequisitionsList.innerHTML = `<p class="text-red-600">Error loading requisitions: ${
+							requisitions.message || "Backend error"
+						}</p>`;
+					}
+				} catch (error) {
+					console.error("Fetch Level 2 requisitions error:", error);
+					pendingRequisitionsList.innerHTML =
+						'<p class="text-red-600">Network error or backend not reachable.</p>';
+				}
+			}
+
+			// Handles approval or denial of a requisition by Level 2 user
+			async function handleDecision(requisitionId, decision) {
+				const messageElement = document.getElementById("level2-message");
+				messageElement.textContent = ""; // Clear previous messages
+
+				const newStatus =
+					decision === "approve" ? "approved_level2" : "denied_level2";
+				const updateData = {
+					status: newStatus,
+					approvedByLevel2UserId: currentUserId,
+					approvedByLevel2UserCpfId: currentUser.cpfId,
+					approvedByLevel2UserName: currentUser.name, // Pass the approver's name
+				};
+
+				try {
+					// Send status update to the backend API
+					const response = await fetch(
+						`${API_BASE_URL}/requisitions/${requisitionId}`,
+						{
+							method: "PUT",
+							headers: { "Content-Type": "application/json" },
+							body: JSON.stringify(updateData),
+						}
+					);
+					const data = await response.json();
+					if (response.ok) {
+						messageElement.textContent = `Requisition ${requisitionId} ${decision}d successfully!`;
+						messageElement.className =
+							"text-green-600 text-center text-sm mt-2";
+						fetchLevel2Requisitions(); // Refresh the pending requisitions list without logging out
+					} else {
+						messageElement.textContent =
+							data.message || `Failed to ${decision} requisition.`;
+						messageElement.className = "text-red-600 text-center text-sm mt-2";
+					}
+				} catch (error) {
+					console.error(`Decision fetch error for ${decision}:`, error);
+					messageElement.textContent =
+						"Network error or backend not reachable.";
+					messageElement.className = "text-red-600 text-center text-sm mt-2";
+				}
+			}
+
+			// Fetches and displays approved requisitions for Level 3 mailbox
+			async function fetchLevel3Requisitions() {
+				const approvedRequisitionsList = document.getElementById(
+					"approved-requisitions-list"
+				);
+				if (!approvedRequisitionsList) return;
+				approvedRequisitionsList.innerHTML =
+					'<p class="text-gray-600">Loading approved requisitions...</p>';
+
+				const filterBasin = document.getElementById("filterBasin")?.value || "";
+				const filterGroup = document.getElementById("filterGroup")?.value || "";
+
+				// Construct query parameters based on filters
+				let queryParams = new URLSearchParams({ status: "approved_level2" });
+				if (filterBasin) {
+					queryParams.append("basin", filterBasin);
+				}
+				if (filterGroup) {
+					queryParams.append("userGroup", filterGroup);
+				}
+
+				try {
+					// Fetch approved requisitions with applied filters
+					const response = await fetch(
+						`${API_BASE_URL}/requisitions?${queryParams.toString()}`
+					);
+					const requisitions = await response.json();
+					if (response.ok) {
+						if (requisitions.length === 0) {
+							approvedRequisitionsList.innerHTML =
+								'<p class="text-gray-600">No requisitions have been approved yet or match your filters.</p>';
+							return;
+						}
+						approvedRequisitionsList.innerHTML = ""; // Clear previous list
+						// Display each approved requisition with download PDF button
+						requisitions.forEach((req) => {
+							approvedRequisitionsList.innerHTML += `
+                            <div class="p-4 border border-gray-200 rounded-lg shadow-sm">
+                                <p class="font-semibold text-lg">${
+																	req.title || `Requisition for ${req.basin}`
+																}</p>
+                                <p class="text-gray-700 text-sm">Objective: ${
+																	req.objective
+																}</p>
+                                <p class="text-gray-700 text-sm">Basin: ${
+																	req.basin
+																}, Block: ${req.block}, Area: ${req.area}</p>
+                                <p class="text-gray-700 text-sm">Data Type: ${
+																	req.data_type
+																}</p>
+                                <p class="text-xs text-gray-500">Requested by: ${
+																	req.user_name
+																} (CPF ID: ${
+								req.requested_by_user_cpf_id
+							}) on ${formatDateToDDMMYYYY(req.created_at)}</p>
+                                <p class="text-xs text-gray-500">Approved by: ${
+																	req.approved_by_level2_user_name || "N/A"
+																} (CPF ID: ${
+								req.approved_by_level2_user_cpf_id || "N/A"
+							}) on ${formatDateToDDMMYYYY(req.decision_at)}</p>
+                                <div class="mt-4">
+                                    <button data-id="${
+																			req.id
+																		}" class="download-pdf-btn py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-md shadow-sm text-sm">
+                                        Download PDF
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+						});
+						// Attach event listeners to the dynamically created download PDF buttons
+						approvedRequisitionsList
+							.querySelectorAll(".download-pdf-btn")
+							.forEach((button) => {
+								button.addEventListener("click", async (e) => {
+									const requisitionId = e.target.dataset.id;
+									await handleDownloadPdf(requisitionId);
+								});
+							});
+					} else {
+						approvedRequisitionsList.innerHTML = `<p class="text-red-600">Error loading requisitions: ${
+							requisitions.message || "Backend error"
+						}</p>`;
+					}
+				} catch (error) {
+					console.error("Fetch Level 3 requisitions error:", error);
+					approvedRequisitionsList.innerHTML =
+						'<p class="text-red-600">Network error or backend not reachable.</p>';
+				}
+			}
+
+			// Handles the download of a requisition PDF
+			async function handleDownloadPdf(requisitionId) {
+				try {
+					const response = await fetch(
+						`${API_BASE_URL}/requisitions/${requisitionId}/pdf`
+					);
+					if (response.ok) {
+						// Create a blob from the response and trigger a download
+						const blob = await response.blob();
+						const url = window.URL.createObjectURL(blob);
+						const a = document.createElement("a");
+						a.href = url;
+						a.download = `requisition_form.pdf`; // Consistent generic filename
+						document.body.appendChild(a);
+						a.click();
+						a.remove();
+						window.URL.revokeObjectURL(url); // Clean up the object URL
+					} else {
+						const errorData = await response.json();
+						alert(
+							`Failed to download PDF: ${errorData.message || "Unknown error"}`
+						);
+					}
+				} catch (error) {
+					console.error("PDF download error:", error);
+					alert("Network error or backend not reachable for PDF download.");
+				}
+			}
+
+			// --- Change Password Logic ---
+
+			// Shows the change password modal
+			function showChangePasswordModal() {
+				const modal = document.getElementById("change-password-modal");
+				modal.classList.add("show");
+				// Clear any previous messages or form fields
+				document.getElementById("password-change-message").textContent = "";
+				document.getElementById("currentPassword").value = "";
+				document.getElementById("newPassword").value = "";
+				document.getElementById("confirmNewPassword").value = "";
+			}
+
+			// Hides the change password modal
+			function hideChangePasswordModal() {
+				const modal = document.getElementById("change-password-modal");
+				modal.classList.remove("show");
+			}
+
+			// Attach event listeners for modal buttons once the DOM is fully loaded
+			document.addEventListener("DOMContentLoaded", () => {
+				const changePasswordModal = document.getElementById(
+					"change-password-modal"
+				);
+				if (changePasswordModal) {
+					document
+						.getElementById("cancel-password-change")
+						.addEventListener("click", hideChangePasswordModal);
+					document
+						.getElementById("change-password-form")
+						.addEventListener("submit", handleChangePassword);
+				}
+			});
+
+			// Handles the password change submission
+			async function handleChangePassword(event) {
+				event.preventDefault();
+				const messageElement = document.getElementById(
+					"password-change-message"
+				);
+				messageElement.textContent = ""; // Clear previous messages
+
+				const currentPassword =
+					document.getElementById("currentPassword").value;
+				const newPassword = document.getElementById("newPassword").value;
+				const confirmNewPassword =
+					document.getElementById("confirmNewPassword").value;
+
+				// Client-side validation for password change
+				if (!currentPassword || !newPassword || !confirmNewPassword) {
+					messageElement.textContent = "All password fields are required.";
+					messageElement.className = "text-red-600 text-center text-sm mt-2";
+					return;
+				}
+				if (newPassword.length < 6) {
+					messageElement.textContent =
+						"New password must be at least 6 characters long.";
+					messageElement.className = "text-red-600 text-center text-sm mt-2";
+					return;
+				}
+				if (newPassword !== confirmNewPassword) {
+					messageElement.textContent =
+						"New password and confirmation do not match.";
+					messageElement.className = "text-red-600 text-center text-sm mt-2";
+					return;
+				}
+				if (currentPassword === newPassword) {
+					messageElement.textContent =
+						"New password cannot be the same as the current password.";
+					messageElement.className = "text-red-600 text-center text-sm mt-2";
+					return;
+				}
+
+				try {
+					// Send password update request to the backend API
+					const response = await fetch(
+						`${API_BASE_URL}/users/${currentUserId}/password`,
+						{
+							method: "PUT",
+							headers: { "Content-Type": "application/json" },
+							body: JSON.stringify({
+								currentPassword: currentPassword,
+								newPassword: newPassword,
+							}),
+						}
+					);
+
+					const data = await response.json();
+					if (response.ok) {
+						messageElement.textContent = "Password changed successfully!";
+						messageElement.className =
+							"text-green-600 text-center text-sm mt-2";
+						// Hide modal after a short delay for the user to read the message
+						setTimeout(() => {
+							hideChangePasswordModal();
+							document.getElementById("currentPassword").value = "";
+							document.getElementById("newPassword").value = "";
+							document.getElementById("confirmNewPassword").value = "";
+						}, 2000);
+					} else {
+						messageElement.textContent =
+							data.message || "Failed to change password.";
+						messageElement.className = "text-red-600 text-center text-sm mt-2";
+					}
+				} catch (error) {
+					console.error("Change password fetch error:", error);
+					messageElement.textContent =
+						"Network error or backend not reachable.";
+					messageElement.className = "text-red-600 text-center text-sm mt-2";
+				}
+			}
+		</script>
+	</body>
+</html>
