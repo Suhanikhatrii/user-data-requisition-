@@ -4,7 +4,11 @@ from flask_cors import CORS
 import uuid
 import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-from fpdf2 import FPDF # CHANGED: Import FPDF from fpdf2, not fpdf
+# CHANGED: Replace fpdf2 with reportlab
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
+from reportlab.lib.utils import ImageReader
 import psycopg2
 from psycopg2 import sql
 import psycopg2.extras # Needed for DictCursor
@@ -406,58 +410,83 @@ def download_requisition_pdf(requisition_id):
         if not requisition:
             return jsonify({"message": "Requisition not found"}), 404
 
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", size=12)
-
-        pdf.cell(200, 10, txt="User Data Requisition Form", ln=True, align="C")
-        pdf.ln(10)
-
-        req_dict = dict(requisition)
-
-        def add_field(label, value):
-            display_value = value.isoformat() if isinstance(value, datetime.datetime) else str(value)
-            pdf.set_font("Arial", 'B', 10)
-            pdf.cell(0, 7, txt=f"{label}:", ln=0)
-            pdf.multi_cell(0, 7, txt=f"{display_value}") # This line was previously fixed, keep it as is
-            pdf.ln(5) # Add a manual line break after each field if desired, or adjust multi_cell height/width
-
-        add_field("Requisition ID", req_dict.get('id', 'N/A'))
-        add_field("Date of Requisition", req_dict.get('requisition_date', 'N/A'))
-        add_field("Basin", req_dict.get('basin', 'N/A'))
-        add_field("Block", req_dict.get('block', 'N/A'))
-        add_field("Area", req_dict.get('area', 'N/A'))
-        add_field("2D/3D", req_dict.get('dimension', 'N/A'))
-        add_field("Return Date (Data to GMS)", req_dict.get('return_date', 'N/A'))
-        add_field("Type of Data Required", req_dict.get('data_type', 'N/A'))
-        add_field("Objective", req_dict.get('objective', 'N/A'))
-        add_field("Remarks", req_dict.get('remarks', 'N/A'))
-
-        pdf.ln(5)
-        pdf.set_font("Arial", 'BU', 12)
-        pdf.cell(200, 10, txt="Requested By", ln=True, align="L")
-        pdf.ln(2)
-
-        add_field("Name", req_dict.get('user_name', 'N/A'))
-        add_field("Designation", req_dict.get('user_designation', 'N/A'))
-        add_field("CPF No.", req_dict.get('user_cpf_no', 'N/A'))
-        add_field("Mobile No.", req_dict.get('user_mobile_no', 'N/A'))
-        add_field("Group", req_dict.get('user_group', 'N/A'))
-
-        pdf.ln(5)
-        pdf.set_font("Arial", 'BU', 12)
-        pdf.cell(200, 10, txt="Approval Details", ln=True, align="L")
-        pdf.ln(2)
-
-        status_display = req_dict.get('status', 'N/A').replace('_', ' ').title()
-        add_field("Status", status_display)
-        add_field("Approved/Denied By", req_dict.get('approved_by_level2_user_name') or req_dict.get('approved_by_level2_user_cpf_id') or 'N/A')
-        add_field("Decision Date", req_dict.get('decision_at', 'N/A'))
-
+        # CHANGED: Replace FPDF with ReportLab
         from io import BytesIO
         pdf_output = BytesIO()
-        # FIX: Call output with 'dest' argument to write to BytesIO
-        pdf.output(dest=pdf_output)
+        
+        # Create PDF with ReportLab
+        c = canvas.Canvas(pdf_output, pagesize=letter)
+        width, height = letter
+
+        # Title
+        c.setFont("Helvetica-Bold", 16)
+        c.drawCentredText(width/2, height - 50, "User Data Requisition Form")
+        
+        # Current y position
+        y_pos = height - 100
+        line_height = 20
+        
+        req_dict = dict(requisition)
+
+        def add_field(c, label, value, y_pos):
+            # Format value
+            if isinstance(value, datetime.datetime):
+                display_value = value.isoformat()
+            elif value is None:
+                display_value = "N/A"
+            else:
+                display_value = str(value)
+            
+            # Draw label in bold
+            c.setFont("Helvetica-Bold", 10)
+            c.drawString(50, y_pos, f"{label}:")
+            
+            # Draw value in regular font
+            c.setFont("Helvetica", 10)
+            c.drawString(200, y_pos, display_value)
+            
+            return y_pos - line_height
+
+        # Add fields
+        y_pos = add_field(c, "Requisition ID", req_dict.get('id', 'N/A'), y_pos)
+        y_pos = add_field(c, "Date of Requisition", req_dict.get('requisition_date', 'N/A'), y_pos)
+        y_pos = add_field(c, "Basin", req_dict.get('basin', 'N/A'), y_pos)
+        y_pos = add_field(c, "Block", req_dict.get('block', 'N/A'), y_pos)
+        y_pos = add_field(c, "Area", req_dict.get('area', 'N/A'), y_pos)
+        y_pos = add_field(c, "2D/3D", req_dict.get('dimension', 'N/A'), y_pos)
+        y_pos = add_field(c, "Return Date (Data to GMS)", req_dict.get('return_date', 'N/A'), y_pos)
+        y_pos = add_field(c, "Type of Data Required", req_dict.get('data_type', 'N/A'), y_pos)
+        y_pos = add_field(c, "Objective", req_dict.get('objective', 'N/A'), y_pos)
+        y_pos = add_field(c, "Remarks", req_dict.get('remarks', 'N/A'), y_pos)
+
+        # Section header - Requested By
+        y_pos -= 10
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(50, y_pos, "Requested By")
+        y_pos -= line_height
+
+        y_pos = add_field(c, "Name", req_dict.get('user_name', 'N/A'), y_pos)
+        y_pos = add_field(c, "Designation", req_dict.get('user_designation', 'N/A'), y_pos)
+        y_pos = add_field(c, "CPF No.", req_dict.get('user_cpf_no', 'N/A'), y_pos)
+        y_pos = add_field(c, "Mobile No.", req_dict.get('user_mobile_no', 'N/A'), y_pos)
+        y_pos = add_field(c, "Group", req_dict.get('user_group', 'N/A'), y_pos)
+
+        # Section header - Approval Details
+        y_pos -= 10
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(50, y_pos, "Approval Details")
+        y_pos -= line_height
+
+        status_display = req_dict.get('status', 'N/A').replace('_', ' ').title()
+        y_pos = add_field(c, "Status", status_display, y_pos)
+        
+        approved_by = (req_dict.get('approved_by_level2_user_name') or 
+                      req_dict.get('approved_by_level2_user_cpf_id') or 'N/A')
+        y_pos = add_field(c, "Approved/Denied By", approved_by, y_pos)
+        y_pos = add_field(c, "Decision Date", req_dict.get('decision_at', 'N/A'), y_pos)
+
+        # Save PDF
+        c.save()
         pdf_output.seek(0)
 
         return send_file(
