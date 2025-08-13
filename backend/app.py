@@ -42,10 +42,12 @@ def init_db():
                 created_by VARCHAR(255)
             )
         ''')
-        # Create requisitions table
+        # Create requisitions table - ADDED 'title' and 'description' back
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS requisitions (
                 id VARCHAR(255) PRIMARY KEY,
+                title TEXT, -- Added back
+                description TEXT, -- Added back
                 requisition_date DATE,
                 basin VARCHAR(255),
                 block VARCHAR(255),
@@ -113,7 +115,7 @@ def login():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        cursor.execute("SELECT id, cpf_id, name, role, password_hash FROM users WHERE cpf_id = %s", (cpf_id,)) # email removed
+        cursor.execute("SELECT id, cpf_id, name, role, password_hash FROM users WHERE cpf_id = %s", (cpf_id,))
         user = cursor.fetchone()
 
         if user and check_password_hash(user['password_hash'], password):
@@ -122,7 +124,6 @@ def login():
                 "cpfId": user['cpf_id'],
                 "uid": user['id'],
                 "name": user['name'],
-                # "email": user['email'], # email removed
                 "role": user['role']
             }), 200
         else:
@@ -138,7 +139,6 @@ def register_user():
     data = request.get_json()
     name = data.get('name')
     cpf_id = data.get('cpfId')
-    # email = data.get('email') # email removed
     password = data.get('password')
     role = data.get('role')
     created_by = data.get('createdBy', 'unknown')
@@ -158,16 +158,9 @@ def register_user():
         if cursor.fetchone():
             return jsonify({"message": "User with this CPF ID already exists"}), 409
 
-        # No email check needed as field is removed
-        # if email:
-        #     cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
-        #     if cursor.fetchone():
-        #         return jsonify({"message": "User with this email already exists"}), 409
-
         user_id = str(uuid.uuid4())
         hashed_password = generate_password_hash(password)
 
-        # Insert statement adjusted: email field removed
         cursor.execute(
             """INSERT INTO users (id, cpf_id, name, password_hash, role, created_by)
             VALUES (%s, %s, %s, %s, %s, %s)""",
@@ -189,7 +182,6 @@ def get_users():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        # Select statement adjusted: email field removed
         cursor.execute("SELECT id, cpf_id, name, role, created_at, created_by FROM users ORDER BY created_at DESC")
         users = cursor.fetchall()
         return jsonify([dict(user) for user in users]), 200
@@ -262,8 +254,9 @@ def create_requisition():
         'requested_by_user_cpf_id': data.get('requestedByUserCpfId'),
         'status': 'pending_level2',
         'created_at': datetime.datetime.now(),
-        'title': f"Requisition for {data.get('basin')} - {data.get('area') or 'N/A'}",
-        'description': data.get('objective')
+        # Generate title and description from existing fields if not directly provided
+        'title': data.get('title', f"Requisition for {data.get('basin')} - {data.get('area') or 'N/A'}"), # Ensure title exists
+        'description': data.get('description', data.get('objective')) # Ensure description exists
     }
 
     mandatory_fields = ['basin', 'user_cpf_no', 'user_mobile_no', 'user_group']
@@ -276,17 +269,19 @@ def create_requisition():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+        # INSERT statement now includes 'title' and 'description'
         cursor.execute(
             """
             INSERT INTO requisitions (
-                id, requisition_date, basin, block, area, dimension, return_date,
+                id, title, description, requisition_date, basin, block, area, dimension, return_date,
                 data_type, objective, remarks, user_name, user_designation,
                 user_cpf_no, user_mobile_no, user_group, requested_by_user_id,
-                requested_by_user_cpf_id, status, created_at, title, description
+                requested_by_user_cpf_id, status, created_at
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
-                req_id, requisition_data['requisition_date'], requisition_data['basin'],
+                req_id, requisition_data['title'], requisition_data['description'], # Included title and description
+                requisition_data['requisition_date'], requisition_data['basin'],
                 requisition_data['block'], requisition_data['area'], requisition_data['dimension'],
                 requisition_data['return_date'], requisition_data['data_type'],
                 requisition_data['objective'], requisition_data['remarks'],
@@ -294,7 +289,7 @@ def create_requisition():
                 requisition_data['user_cpf_no'], requisition_data['user_mobile_no'],
                 requisition_data['user_group'], requisition_data['requested_by_user_id'],
                 requisition_data['requested_by_user_cpf_id'], requisition_data['status'],
-                requisition_data['created_at'], requisition_data['title'], requisition_data['description']
+                requisition_data['created_at']
             )
         )
         conn.commit()
@@ -306,7 +301,6 @@ def create_requisition():
     finally:
         if conn:
             conn.close()
-
 
 @app.route('/api/requisitions', methods=['GET'])
 def get_requisitions():
