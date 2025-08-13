@@ -4,7 +4,7 @@ from flask_cors import CORS
 import uuid
 import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-from fpdf import FPDF
+from fpdf2 import FPDF # CHANGED: Import FPDF from fpdf2, not fpdf
 import psycopg2
 from psycopg2 import sql
 import psycopg2.extras # Needed for DictCursor
@@ -419,8 +419,7 @@ def download_requisition_pdf(requisition_id):
             display_value = value.isoformat() if isinstance(value, datetime.datetime) else str(value)
             pdf.set_font("Arial", 'B', 10)
             pdf.cell(0, 7, txt=f"{label}:", ln=0)
-            # FIX: Removed 'ln=True' from multi_cell
-            pdf.multi_cell(0, 7, txt=f"{display_value}") # Removed ln=True
+            pdf.multi_cell(0, 7, txt=f"{display_value}") # This line was previously fixed, keep it as is
             pdf.ln(5) # Add a manual line break after each field if desired, or adjust multi_cell height/width
 
         add_field("Requisition ID", req_dict.get('id', 'N/A'))
@@ -457,7 +456,8 @@ def download_requisition_pdf(requisition_id):
 
         from io import BytesIO
         pdf_output = BytesIO()
-        pdf.output(pdf_output)
+        # FIX: Call output with 'dest' argument to write to BytesIO
+        pdf.output(dest=pdf_output)
         pdf_output.seek(0)
 
         return send_file(
