@@ -4,7 +4,7 @@ from flask_cors import CORS
 import uuid
 import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-from fpdf2 import FPDF
+from fpdf import FPDF
 import psycopg2 # Import psycopg2 for PostgreSQL
 from psycopg2 import sql # For safe query building
 
