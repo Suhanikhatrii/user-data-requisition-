@@ -298,14 +298,14 @@
 			// --- Configuration ---
 			// Base URL for the Flask backend.
 			const API_BASE_URL =
-				"https://user-data-requisition-ongc.onrender.com/api";
+				"https://user-data-requisition-ongc.onrender.com/api"; // Make sure this matches your deployed backend URL
 
 			// Global state variables for the current user and their role
 			// These will be persisted in localStorage
-			let currentUser = null; // Stores { cpfId, uid, name, email }
+			let currentUser = null;
 			let currentRole = null;
 			let currentUserId = null;
-			let isAppReady = false; // Flag to indicate if the app has finished initial loading
+			let isAppReady = false;
 
 			// --- LocalStorage Keys ---
 			const LOCAL_STORAGE_USER_KEY = "currentUserData";
@@ -314,32 +314,26 @@
 
 			// --- Utility Functions ---
 
-			// Helper function to format date strings to DD.MM.YYYY for consistent display
 			function formatDateToDDMMYYYY(dateString) {
 				if (!dateString) {
-					return "N/A"; // Return "N/A" if the date string is null or empty
+					return "N/A";
 				}
 				try {
-					// Attempt to parse the date string. Handles ISO 8601 (YYYY-MM-DDTHH:MM:SS.sssZ)
-					// or YYYY-MM-DD HH:MM:SS format, or just YYYY-MM-DD
 					const date = new Date(dateString);
 					if (isNaN(date.getTime())) {
-						// Check if the parsed date is invalid
-						// Fallback for YYYY-MM-DD if Date object fails for some reason
 						const [year, month, day] = dateString.split(" ")[0].split("-");
 						return `${day}.${month}.${year}`;
 					}
-					const day = String(date.getDate()).padStart(2, "0"); // Get day and pad with leading zero if needed
-					const month = String(date.getMonth() + 1).padStart(2, "0"); // Get month (0-indexed) and pad
-					const year = date.getFullYear(); // Get full year
-					return `${day}.${month}.${year}`; // Return formatted string
+					const day = String(date.getDate()).padStart(2, "0");
+					const month = String(date.getMonth() + 1).padStart(2, "0");
+					const year = date.getFullYear();
+					return `${day}.${month}.${year}`;
 				} catch (e) {
 					console.error("Error formatting date:", dateString, e);
-					return dateString; // Fallback to original string on error
+					return dateString;
 				}
 			}
 
-			// Saves current user session data to localStorage
 			function saveSessionToLocalStorage() {
 				localStorage.setItem(
 					LOCAL_STORAGE_USER_KEY,
@@ -349,7 +343,6 @@
 				localStorage.setItem(LOCAL_STORAGE_USERID_KEY, currentUserId);
 			}
 
-			// Loads user session data from localStorage
 			function loadSessionFromLocalStorage() {
 				const userData = localStorage.getItem(LOCAL_STORAGE_USER_KEY);
 				const userRole = localStorage.getItem(LOCAL_STORAGE_ROLE_KEY);
@@ -359,12 +352,11 @@
 					currentUser = JSON.parse(userData);
 					currentRole = userRole;
 					currentUserId = userId;
-					return true; // Session loaded successfully
+					return true;
 				}
-				return false; // No session found
+				return false;
 			}
 
-			// Clears user session data from localStorage
 			function clearSessionFromLocalStorage() {
 				localStorage.removeItem(LOCAL_STORAGE_USER_KEY);
 				localStorage.removeItem(LOCAL_STORAGE_ROLE_KEY);
@@ -373,7 +365,6 @@
 
 			// --- UI Rendering Functions ---
 
-			// Renders the login form, handling potential error messages
 			function renderLoginForm(errorMessage = "") {
 				const appRoot = document.getElementById("app-root");
 				appRoot.innerHTML = `
@@ -400,13 +391,11 @@
                     </div>
                 </div>
             `;
-				// Attach event listener for form submission
 				document
 					.getElementById("login-form")
 					.addEventListener("submit", handleLogin);
 			}
 
-			// Renders the main dashboard after successful login, adapting to the user's role
 			function renderDashboard() {
 				const appRoot = document.getElementById("app-root");
 				appRoot.innerHTML = `
@@ -425,11 +414,6 @@
                             <span class="text-sm text-gray-500">CPF ID: <span class="font-medium">${
 															currentUser.cpfId
 														}</span></span>
-                            ${
-															currentUser.email
-																? `<br /><span class="text-sm text-gray-500">Email: <span class="font-medium">${currentUser.email}</span></span>`
-																: ""
-														}
                         </p>
                         <div class="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4 mt-8">
                             <button id="logout-button" class="btn-secondary">Logout</button>
@@ -439,7 +423,6 @@
                     <div id="role-specific-content" class="w-full max-w-2xl"></div>
                 </div>
             `;
-				// Attach event listeners for logout and password change buttons
 				document
 					.getElementById("logout-button")
 					.addEventListener("click", handleLogout);
@@ -450,7 +433,6 @@
 				const roleSpecificContentDiv = document.getElementById(
 					"role-specific-content"
 				);
-				// Render content specific to the user's role
 				if (currentRole === "level1") {
 					renderLevel1RequisitionCreator(roleSpecificContentDiv);
 				} else if (currentRole === "level2") {
@@ -462,7 +444,6 @@
 				}
 			}
 
-			// Renders the requisition creation form for Level 1 users
 			function renderLevel1RequisitionCreator(parentDiv) {
 				parentDiv.innerHTML = `
                 <div class="role-section">
@@ -551,10 +532,9 @@
 				document
 					.getElementById("requisition-form")
 					.addEventListener("submit", handleSubmitRequisition);
-				fetchLevel1Requisitions(); // Fetch requisitions upon rendering the form
+				fetchLevel1Requisitions();
 			}
 
-			// Renders the approval inbox for Level 2 users
 			function renderLevel2ApprovalInbox(parentDiv) {
 				parentDiv.innerHTML = `
                 <div class="role-section">
@@ -565,10 +545,9 @@
                     <p id="level2-message" class="text-center text-sm mt-2"></p>
                 </div>
             `;
-				fetchLevel2Requisitions(); // Fetch pending requisitions upon rendering the inbox
+				fetchLevel2Requisitions();
 			}
 
-			// Renders the mailbox for Level 3 users, with filtering options
 			function renderLevel3Mailbox(parentDiv) {
 				parentDiv.innerHTML = `
                 <div class="role-section">
@@ -597,10 +576,9 @@
 				document
 					.getElementById("apply-filter-btn")
 					.addEventListener("click", fetchLevel3Requisitions);
-				fetchLevel3Requisitions(); // Initial fetch of approved requisitions
+				fetchLevel3Requisitions();
 			}
 
-			// Renders the admin panel for user management
 			function renderAdminPanel(parentDiv) {
 				parentDiv.innerHTML = `
                 <div class="role-section bg-red-50 border border-red-200">
@@ -617,10 +595,7 @@
                                 <label for="newCpfId" class="block text-sm font-medium text-gray-700">CPF ID</label>
                                 <input type="text" id="newCpfId" class="input-field" placeholder="Enter user's CPF ID (e.g., 1002)" required>
                             </div>
-                            <div>
-                                <label for="newEmail" class="block text-sm font-medium text-gray-700">Email (Optional)</label>
-                                <input type="email" id="newEmail" class="input-field" placeholder="newuser@example.com">
-                            </div>
+                            <!-- Email field removed -->
                             <div>
                                 <label for="newPassword" class="block text-sm font-medium text-gray-700">Password</label>
                                 <input type="password" id="newPassword" class="input-field" placeholder="min 6 characters" required>
@@ -653,93 +628,77 @@
 				document
 					.getElementById("create-user-form")
 					.addEventListener("submit", handleCreateUser);
-				fetchUserProfiles(); // Fetch all user profiles upon rendering the admin panel
+				fetchUserProfiles();
 			}
 
 			// --- Authentication Logic ---
 
-			// Handles user login attempt
 			async function handleLogin(event) {
-				event.preventDefault(); // Prevent default form submission behavior
+				event.preventDefault();
 				const cpfId = document.getElementById("cpfId").value;
 				const password = document.getElementById("password").value;
 
 				try {
-					// Send login credentials to the backend API
 					const response = await fetch(`${API_BASE_URL}/login`, {
 						method: "POST",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({ cpfId, password }),
 					});
-					const data = await response.json(); // Parse the JSON response
+					const data = await response.json();
 					if (response.ok) {
-						// If login is successful, store user details and render the dashboard
-						currentUser = {
-							cpfId: data.cpfId,
-							uid: data.uid,
-							name: data.name,
-							email: data.email,
-						};
+						currentUser = { cpfId: data.cpfId, uid: data.uid, name: data.name }; // email removed
 						currentRole = data.role;
 						currentUserId = currentUser.uid;
-						saveSessionToLocalStorage(); // Persist session data
-						renderDashboard(); // Render dashboard on successful login
+						saveSessionToLocalStorage();
+						renderDashboard();
 					} else {
-						// If login fails, display the error message on the login form
 						renderLoginForm(data.message || "Login failed.");
 					}
 				} catch (error) {
 					console.error("Login fetch error:", error);
-					// Display a generic network error message if the backend is unreachable
 					renderLoginForm(
 						"Network error or backend not reachable. Is the Python server running?"
 					);
 				}
 			}
 
-			// Handles user logout
 			async function handleLogout() {
-				// Clear current user session data from memory and localStorage
 				currentUser = null;
 				currentRole = null;
 				currentUserId = null;
-				clearSessionFromLocalStorage(); // Clear persisted session
-				renderLoginForm(); // Redirect to login form
+				clearSessionFromLocalStorage();
+				renderLoginForm();
 			}
 
-			// Initial application load logic
 			window.onload = function () {
-				isAppReady = true; // Mark app as ready
+				isAppReady = true;
 				const loadingScreen = document.getElementById("loading-screen");
 				if (loadingScreen) {
-					loadingScreen.remove(); // Remove loading screen
+					loadingScreen.remove();
 				}
 
-				// Attempt to load session from localStorage
 				if (loadSessionFromLocalStorage()) {
-					renderDashboard(); // If session found, render dashboard directly
+					renderDashboard();
 				} else {
-					renderLoginForm(); // Otherwise, render the login form
+					renderLoginForm();
 				}
 			};
 
 			// --- Admin User Creation Logic ---
 
-			// Handles creation of new user accounts by an Admin
 			async function handleCreateUser(event) {
 				event.preventDefault();
 				const name = document.getElementById("newName").value;
 				const cpfId = document.getElementById("newCpfId").value;
-				const email = document.getElementById("newEmail").value;
+				// const email = document.getElementById('newEmail').value; // email removed
 				const password = document.getElementById("newPassword").value;
 				const role = document.getElementById("newUserRole").value;
 				const createUserMessage = document.getElementById(
 					"create-user-message"
 				);
 
-				createUserMessage.textContent = ""; // Clear previous messages
+				createUserMessage.textContent = "";
 
-				// Client-side validation for required fields and password length
 				if (!name || !cpfId || !password || !role) {
 					createUserMessage.textContent =
 						"Please fill in all required fields (Name, CPF ID, Password, Role).";
@@ -754,14 +713,13 @@
 				}
 
 				try {
-					// Send new user data to the registration API
 					const response = await fetch(`${API_BASE_URL}/register`, {
 						method: "POST",
 						headers: { "Content-Type": "application/json" },
+						// email removed from payload
 						body: JSON.stringify({
 							name,
 							cpfId,
-							email,
 							password,
 							role,
 							createdBy: currentUser.name || currentUser.cpfId,
@@ -769,18 +727,16 @@
 					});
 					const data = await response.json();
 					if (response.ok) {
-						// On successful creation, display success message and clear form
 						createUserMessage.textContent = `User ${name} (CPF ID: ${cpfId}) created successfully with role ${role}!`;
 						createUserMessage.className =
 							"text-green-600 text-center text-sm mt-2";
 						document.getElementById("newName").value = "";
 						document.getElementById("newCpfId").value = "";
-						document.getElementById("newEmail").value = "";
+						// document.getElementById('newEmail').value = ''; // email removed
 						document.getElementById("newPassword").value = "";
 						document.getElementById("newUserRole").value = "";
-						fetchUserProfiles(); // Refresh the list of existing users without logging out
+						fetchUserProfiles();
 					} else {
-						// On failure, display error message
 						createUserMessage.textContent =
 							data.message || "Failed to create user.";
 						createUserMessage.className =
@@ -794,17 +750,16 @@
 				}
 			}
 
-			// Fetches and displays all user profiles in the Admin panel
 			async function fetchUserProfiles() {
 				const existingUsersList = document.getElementById(
 					"existing-users-list"
 				);
-				if (!existingUsersList) return; // Exit if the element is not present
+				if (!existingUsersList) return;
 				existingUsersList.innerHTML =
-					'<p class="text-gray-600">Loading users...</p>'; // Show loading message
+					'<p class="text-gray-600">Loading users...</p>';
 
 				try {
-					const response = await fetch(`${API_BASE_URL}/users`); // Fetch user data
+					const response = await fetch(`${API_BASE_URL}/users`);
 					const users = await response.json();
 					if (response.ok) {
 						if (users.length === 0) {
@@ -812,19 +767,14 @@
 								'<p class="text-gray-600">No users found.</p>';
 							return;
 						}
-						existingUsersList.innerHTML = ""; // Clear existing list
-						// Iterate and display each user profile
+						existingUsersList.innerHTML = "";
 						users.forEach((userProfile) => {
 							existingUsersList.innerHTML += `
                             <div class="p-3 border border-gray-200 rounded-md bg-gray-50">
                                 <p class="font-semibold">${
 																	userProfile.name
 																} (CPF ID: ${userProfile.cpf_id})</p>
-                                ${
-																	userProfile.email
-																		? `<p class="text-sm text-gray-700">Email: ${userProfile.email}</p>`
-																		: ""
-																}
+                                <!-- Email field removed -->
                                 <p class="text-sm text-gray-700">Role: <span class="font-medium">${userProfile.role.toUpperCase()}</span></p>
                                 <p class="text-xs text-gray-500">Created: ${formatDateToDDMMYYYY(
 																	userProfile.created_at
@@ -847,15 +797,13 @@
 				}
 			}
 
-			// --- Requisition Workflow Logic ---
+			// --- Requisition Workflow Logic (no changes needed here related to email) ---
 
-			// Handles submission of a new requisition by Level 1 user
 			async function handleSubmitRequisition(event) {
 				event.preventDefault();
 				const messageElement = document.getElementById("requisition-message");
 				messageElement.textContent = "";
 
-				// Collect all form data for the new requisition
 				const requisitionData = {
 					requisitionDate: document.getElementById("reqDate").value,
 					basin: document.getElementById("reqBasin").value,
@@ -875,7 +823,6 @@
 					requestedByUserCpfId: currentUser.cpfId,
 				};
 
-				// Define mandatory fields for client-side validation
 				const requiredFields = [
 					"basin",
 					"userCPFNo",
@@ -883,7 +830,6 @@
 					"userGroup",
 				];
 
-				// Perform client-side validation
 				for (const field of requiredFields) {
 					if (!requisitionData[field]) {
 						messageElement.textContent = `Please fill in the mandatory field: ${field
@@ -895,7 +841,6 @@
 				}
 
 				try {
-					// Send new requisition data to the backend API
 					const response = await fetch(`${API_BASE_URL}/requisitions`, {
 						method: "POST",
 						headers: { "Content-Type": "application/json" },
@@ -903,7 +848,6 @@
 					});
 					const data = await response.json();
 					if (response.ok) {
-						// On successful submission, display success message and clear form fields
 						messageElement.textContent = "Requisition submitted successfully!";
 						messageElement.className =
 							"text-green-600 text-center text-sm mt-2";
@@ -916,13 +860,12 @@
 						document.getElementById("reqDataType").value = "";
 						document.getElementById("reqObjective").value = "";
 						document.getElementById("reqRemarks").value = "";
-						document.getElementById("userName").value = currentUser.name || ""; // Keep user name if pre-filled
+						document.getElementById("userName").value = currentUser.name || "";
 						document.getElementById("userDesignation").value = "";
 						document.getElementById("userMobileNo").value = "";
 						document.getElementById("userGroup").value = "";
-						fetchLevel1Requisitions(); // Refresh the list of submitted requisitions without logging out
+						fetchLevel1Requisitions();
 					} else {
-						// On failure, display error message
 						messageElement.textContent =
 							data.message || "Failed to submit requisition.";
 						messageElement.className = "text-red-600 text-center text-sm mt-2";
@@ -935,7 +878,6 @@
 				}
 			}
 
-			// Fetches and displays requisitions submitted by the current Level 1 user
 			async function fetchLevel1Requisitions() {
 				const userRequisitionsList = document.getElementById(
 					"user-requisitions-list"
@@ -945,7 +887,6 @@
 					'<p class="text-gray-600">Loading your requisitions...</p>';
 
 				try {
-					// Fetch requisitions filtered by the current user's ID
 					const response = await fetch(
 						`${API_BASE_URL}/requisitions?userId=${currentUserId}`
 					);
@@ -956,8 +897,7 @@
 								'<p class="text-gray-600">No requisitions submitted yet.</p>';
 							return;
 						}
-						userRequisitionsList.innerHTML = ""; // Clear previous list
-						// Display each requisition with its status and formatted dates
+						userRequisitionsList.innerHTML = "";
 						requisitions.forEach((req) => {
 							const statusClass =
 								req.status === "pending_level2"
@@ -1004,7 +944,6 @@
 				}
 			}
 
-			// Fetches and displays requisitions pending approval for Level 2 users
 			async function fetchLevel2Requisitions() {
 				const pendingRequisitionsList = document.getElementById(
 					"pending-requisitions-list"
@@ -1014,7 +953,6 @@
 					'<p class="text-gray-600">Loading pending requisitions...</p>';
 
 				try {
-					// Fetch requisitions with 'pending_level2' status
 					const response = await fetch(
 						`${API_BASE_URL}/requisitions?status=pending_level2`
 					);
@@ -1025,8 +963,7 @@
 								'<p class="text-gray-600">No requisitions pending your approval.</p>';
 							return;
 						}
-						pendingRequisitionsList.innerHTML = ""; // Clear previous list
-						// Display each pending requisition with approve/deny buttons
+						pendingRequisitionsList.innerHTML = "";
 						requisitions.forEach((req) => {
 							const reqHtml = `
                             <div class="p-4 border border-gray-200 rounded-lg shadow-sm">
@@ -1069,7 +1006,6 @@
 							pendingRequisitionsList.insertAdjacentHTML("beforeend", reqHtml);
 						});
 
-						// Add event listeners to the newly created buttons
 						pendingRequisitionsList
 							.querySelectorAll(".approve-deny-btn")
 							.forEach((button) => {
@@ -1099,10 +1035,9 @@
 				}
 			}
 
-			// Handles approval or denial of a requisition by Level 2 user
 			async function handleDecision(requisitionId, decision) {
 				const messageElement = document.getElementById("level2-message");
-				messageElement.textContent = ""; // Clear previous messages
+				messageElement.textContent = "";
 
 				const newStatus =
 					decision === "approve" ? "approved_level2" : "denied_level2";
@@ -1110,11 +1045,10 @@
 					status: newStatus,
 					approvedByLevel2UserId: currentUserId,
 					approvedByLevel2UserCpfId: currentUser.cpfId,
-					approvedByLevel2UserName: currentUser.name, // Pass the approver's name
+					approvedByLevel2UserName: currentUser.name,
 				};
 
 				try {
-					// Send status update to the backend API
 					const response = await fetch(
 						`${API_BASE_URL}/requisitions/${requisitionId}`,
 						{
@@ -1128,7 +1062,7 @@
 						messageElement.textContent = `Requisition ${requisitionId} ${decision}d successfully!`;
 						messageElement.className =
 							"text-green-600 text-center text-sm mt-2";
-						fetchLevel2Requisitions(); // Refresh the pending requisitions list without logging out
+						fetchLevel2Requisitions();
 					} else {
 						messageElement.textContent =
 							data.message || `Failed to ${decision} requisition.`;
@@ -1142,7 +1076,6 @@
 				}
 			}
 
-			// Fetches and displays approved requisitions for Level 3 mailbox
 			async function fetchLevel3Requisitions() {
 				const approvedRequisitionsList = document.getElementById(
 					"approved-requisitions-list"
@@ -1154,7 +1087,6 @@
 				const filterBasin = document.getElementById("filterBasin")?.value || "";
 				const filterGroup = document.getElementById("filterGroup")?.value || "";
 
-				// Construct query parameters based on filters
 				let queryParams = new URLSearchParams({ status: "approved_level2" });
 				if (filterBasin) {
 					queryParams.append("basin", filterBasin);
@@ -1164,7 +1096,6 @@
 				}
 
 				try {
-					// Fetch approved requisitions with applied filters
 					const response = await fetch(
 						`${API_BASE_URL}/requisitions?${queryParams.toString()}`
 					);
@@ -1175,8 +1106,7 @@
 								'<p class="text-gray-600">No requisitions have been approved yet or match your filters.</p>';
 							return;
 						}
-						approvedRequisitionsList.innerHTML = ""; // Clear previous list
-						// Display each approved requisition with download PDF button
+						approvedRequisitionsList.innerHTML = "";
 						requisitions.forEach((req) => {
 							approvedRequisitionsList.innerHTML += `
                             <div class="p-4 border border-gray-200 rounded-lg shadow-sm">
@@ -1212,7 +1142,6 @@
                             </div>
                         `;
 						});
-						// Attach event listeners to the dynamically created download PDF buttons
 						approvedRequisitionsList
 							.querySelectorAll(".download-pdf-btn")
 							.forEach((button) => {
@@ -1229,27 +1158,25 @@
 				} catch (error) {
 					console.error("Fetch Level 3 requisitions error:", error);
 					approvedRequisitionsList.innerHTML =
-						'<p class="text-red-600">Network error or backend not reachable.</p>';
+						'<p class="text-red-600">Network error or backend not reachable.';
 				}
 			}
 
-			// Handles the download of a requisition PDF
 			async function handleDownloadPdf(requisitionId) {
 				try {
 					const response = await fetch(
 						`${API_BASE_URL}/requisitions/${requisitionId}/pdf`
 					);
 					if (response.ok) {
-						// Create a blob from the response and trigger a download
 						const blob = await response.blob();
 						const url = window.URL.createObjectURL(blob);
 						const a = document.createElement("a");
 						a.href = url;
-						a.download = `requisition_form.pdf`; // Consistent generic filename
+						a.download = `requisition_form.pdf`;
 						document.body.appendChild(a);
 						a.click();
 						a.remove();
-						window.URL.revokeObjectURL(url); // Clean up the object URL
+						window.URL.revokeObjectURL(url);
 					} else {
 						const errorData = await response.json();
 						alert(
@@ -1262,26 +1189,22 @@
 				}
 			}
 
-			// --- Change Password Logic ---
+			// --- Change Password Logic (no changes needed here related to email) ---
 
-			// Shows the change password modal
 			function showChangePasswordModal() {
 				const modal = document.getElementById("change-password-modal");
 				modal.classList.add("show");
-				// Clear any previous messages or form fields
 				document.getElementById("password-change-message").textContent = "";
 				document.getElementById("currentPassword").value = "";
 				document.getElementById("newPassword").value = "";
 				document.getElementById("confirmNewPassword").value = "";
 			}
 
-			// Hides the change password modal
 			function hideChangePasswordModal() {
 				const modal = document.getElementById("change-password-modal");
 				modal.classList.remove("show");
 			}
 
-			// Attach event listeners for modal buttons once the DOM is fully loaded
 			document.addEventListener("DOMContentLoaded", () => {
 				const changePasswordModal = document.getElementById(
 					"change-password-modal"
@@ -1296,13 +1219,12 @@
 				}
 			});
 
-			// Handles the password change submission
 			async function handleChangePassword(event) {
 				event.preventDefault();
 				const messageElement = document.getElementById(
 					"password-change-message"
 				);
-				messageElement.textContent = ""; // Clear previous messages
+				messageElement.textContent = "";
 
 				const currentPassword =
 					document.getElementById("currentPassword").value;
@@ -1310,7 +1232,6 @@
 				const confirmNewPassword =
 					document.getElementById("confirmNewPassword").value;
 
-				// Client-side validation for password change
 				if (!currentPassword || !newPassword || !confirmNewPassword) {
 					messageElement.textContent = "All password fields are required.";
 					messageElement.className = "text-red-600 text-center text-sm mt-2";
@@ -1336,7 +1257,6 @@
 				}
 
 				try {
-					// Send password update request to the backend API
 					const response = await fetch(
 						`${API_BASE_URL}/users/${currentUserId}/password`,
 						{
@@ -1354,7 +1274,6 @@
 						messageElement.textContent = "Password changed successfully!";
 						messageElement.className =
 							"text-green-600 text-center text-sm mt-2";
-						// Hide modal after a short delay for the user to read the message
 						setTimeout(() => {
 							hideChangePasswordModal();
 							document.getElementById("currentPassword").value = "";

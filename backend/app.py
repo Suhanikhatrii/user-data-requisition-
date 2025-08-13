@@ -5,15 +5,15 @@ import uuid
 import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from fpdf import FPDF
-import psycopg2 # Import psycopg2 for PostgreSQL
-from psycopg2 import sql # For safe query building
+import psycopg2
+from psycopg2 import sql
+import psycopg2.extras # Needed for DictCursor
 
 app = Flask(__name__)
 # IMPORTANT: For production, replace "*" with your Render frontend URL (e.g., "https://your-frontend.onrender.com")
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # --- DATABASE CONFIGURATION FOR POSTGRESQL ---
-# Render will automatically inject your database URL as an environment variable
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def get_db_connection():
@@ -25,18 +25,17 @@ def get_db_connection():
 
 def init_db():
     """Initializes the database schema for PostgreSQL."""
-    conn = None # Initialize conn to None
+    conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Create users table
+        # Create users table (email column removed)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 id VARCHAR(255) PRIMARY KEY,
                 cpf_id VARCHAR(255) UNIQUE NOT NULL,
                 name VARCHAR(255),
-                email VARCHAR(255) UNIQUE,
                 password_hash VARCHAR(255) NOT NULL,
                 role VARCHAR(255) NOT NULL,
                 created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -78,35 +77,31 @@ def init_db():
         if cursor.fetchone() is None:
             admin_id = str(uuid.uuid4())
             hashed_password = generate_password_hash('password123')
+            # Insert statement adjusted: email field removed
             cursor.execute(
-                """INSERT INTO users (id, cpf_id, name, email, password_hash, role, created_by)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-                (admin_id, 'admin123', 'Admin User', 'admin@example.com', hashed_password, 'admin', 'system')
+                """INSERT INTO users (id, cpf_id, name, password_hash, role, created_by)
+                VALUES (%s, %s, %s, %s, %s, %s)""",
+                (admin_id, 'admin123', 'Admin User', hashed_password, 'admin', 'system')
             )
             conn.commit()
             print("Default admin user created: CPF ID: admin123 / Password: password123")
     except psycopg2.Error as e:
         print(f"Database initialization error: {e}")
         if conn:
-            conn.rollback() # Rollback in case of error
+            conn.rollback()
     finally:
         if conn:
             conn.close()
 
-# Initialize the database *once* when the application context is ready
-# Use app.before_first_request or a dedicated script for more complex init
 with app.app_context():
     init_db()
 
-# Root endpoint for a simple health check or welcome message
 @app.route('/', methods=['GET'])
 def home():
-    """Returns a welcome message for the API root."""
     return jsonify({"message": "Welcome to the Flask API!"}), 200
 
 @app.route('/api/login', methods=['POST'])
 def login():
-    """Authenticates a user based on CPF ID and password."""
     data = request.get_json()
     cpf_id = data.get('cpfId')
     password = data.get('password')
@@ -114,11 +109,11 @@ def login():
     if not cpf_id or not password:
         return jsonify({"message": "CPF ID and password are required"}), 400
 
-    conn = None # Initialize conn
+    conn = None
     try:
         conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor) # To fetch as dictionary
-        cursor.execute("SELECT * FROM users WHERE cpf_id = %s", (cpf_id,))
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor.execute("SELECT id, cpf_id, name, role, password_hash FROM users WHERE cpf_id = %s", (cpf_id,)) # email removed
         user = cursor.fetchone()
 
         if user and check_password_hash(user['password_hash'], password):
@@ -127,7 +122,7 @@ def login():
                 "cpfId": user['cpf_id'],
                 "uid": user['id'],
                 "name": user['name'],
-                "email": user['email'],
+                # "email": user['email'], # email removed
                 "role": user['role']
             }), 200
         else:
@@ -138,14 +133,12 @@ def login():
         if conn:
             conn.close()
 
-
 @app.route('/api/register', methods=['POST'])
 def register_user():
-    """Registers a new user (admin functionality)."""
     data = request.get_json()
     name = data.get('name')
     cpf_id = data.get('cpfId')
-    email = data.get('email')
+    # email = data.get('email') # email removed
     password = data.get('password')
     role = data.get('role')
     created_by = data.get('createdBy', 'unknown')
@@ -161,23 +154,24 @@ def register_user():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Check if CPF ID or email already exists
         cursor.execute("SELECT id FROM users WHERE cpf_id = %s", (cpf_id,))
         if cursor.fetchone():
             return jsonify({"message": "User with this CPF ID already exists"}), 409
 
-        if email:
-            cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
-            if cursor.fetchone():
-                return jsonify({"message": "User with this email already exists"}), 409
+        # No email check needed as field is removed
+        # if email:
+        #     cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+        #     if cursor.fetchone():
+        #         return jsonify({"message": "User with this email already exists"}), 409
 
         user_id = str(uuid.uuid4())
         hashed_password = generate_password_hash(password)
 
+        # Insert statement adjusted: email field removed
         cursor.execute(
-            """INSERT INTO users (id, cpf_id, name, email, password_hash, role, created_by)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-            (user_id, cpf_id, name, email, hashed_password, role, created_by)
+            """INSERT INTO users (id, cpf_id, name, password_hash, role, created_by)
+            VALUES (%s, %s, %s, %s, %s, %s)""",
+            (user_id, cpf_id, name, hashed_password, role, created_by)
         )
         conn.commit()
         return jsonify({"message": "User registered successfully", "userId": user_id}), 201
@@ -191,12 +185,12 @@ def register_user():
 
 @app.route('/api/users', methods=['GET'])
 def get_users():
-    """Retrieves a list of all users."""
     conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        cursor.execute("SELECT id, cpf_id, name, email, role, created_at, created_by FROM users ORDER BY created_at DESC")
+        # Select statement adjusted: email field removed
+        cursor.execute("SELECT id, cpf_id, name, role, created_at, created_by FROM users ORDER BY created_at DESC")
         users = cursor.fetchall()
         return jsonify([dict(user) for user in users]), 200
     except psycopg2.Error as e:
@@ -207,7 +201,6 @@ def get_users():
 
 @app.route('/api/users/<user_id>/password', methods=['PUT'])
 def change_password(user_id):
-    """Changes a user's password."""
     data = request.get_json()
     current_password = data.get('currentPassword')
     new_password = data.get('newPassword')
@@ -248,7 +241,6 @@ def change_password(user_id):
 
 @app.route('/api/requisitions', methods=['POST'])
 def create_requisition():
-    """Creates a new data requisition."""
     data = request.get_json()
 
     requisition_data = {
@@ -269,7 +261,7 @@ def create_requisition():
         'requested_by_user_id': data.get('requestedByUserId'),
         'requested_by_user_cpf_id': data.get('requestedByUserCpfId'),
         'status': 'pending_level2',
-        'created_at': datetime.datetime.now(), # Use datetime object for TIMESTAMP
+        'created_at': datetime.datetime.now(),
         'title': f"Requisition for {data.get('basin')} - {data.get('area') or 'N/A'}",
         'description': data.get('objective')
     }
@@ -318,7 +310,6 @@ def create_requisition():
 
 @app.route('/api/requisitions', methods=['GET'])
 def get_requisitions():
-    """Retrieves requisitions based on query parameters."""
     status_filter = request.args.get('status')
     user_id_filter = request.args.get('userId')
     basin_filter = request.args.get('basin')
@@ -339,7 +330,7 @@ def get_requisitions():
             query_parts.append(" AND requested_by_user_id = %s")
             params.append(user_id_filter)
         if basin_filter:
-            query_parts.append(" AND basin ILIKE %s") # ILIKE for case-insensitive search
+            query_parts.append(" AND basin ILIKE %s")
             params.append(f"%{basin_filter}%")
         if user_group_filter:
             query_parts.append(" AND user_group ILIKE %s")
@@ -351,11 +342,9 @@ def get_requisitions():
         cursor.execute(query_str, params)
         requisitions = cursor.fetchall()
         
-        # Convert fetched rows to plain dictionaries for jsonify
         result_list = []
         for req in requisitions:
             req_dict = dict(req)
-            # Convert datetime objects to ISO format string for JSON
             if 'created_at' in req_dict and isinstance(req_dict['created_at'], datetime.datetime):
                 req_dict['created_at'] = req_dict['created_at'].isoformat()
             if 'decision_at' in req_dict and isinstance(req_dict['decision_at'], datetime.datetime):
@@ -371,7 +360,6 @@ def get_requisitions():
 
 @app.route('/api/requisitions/<string:requisition_id>', methods=['PUT'])
 def update_requisition_status(requisition_id):
-    """Updates the status of a specific requisition (Level 2 approval)."""
     data = request.get_json()
     new_status = data.get('status')
     approved_by_level2_user_id = data.get('approvedByLevel2UserId')
@@ -386,7 +374,7 @@ def update_requisition_status(requisition_id):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        decision_timestamp = datetime.datetime.now() # Use datetime object
+        decision_timestamp = datetime.datetime.now()
 
         cursor.execute(
             """
@@ -415,7 +403,6 @@ def update_requisition_status(requisition_id):
 
 @app.route('/api/requisitions/<string:requisition_id>/pdf', methods=['GET'])
 def download_requisition_pdf(requisition_id):
-    """Generates and provides a PDF download for a specific requisition."""
     conn = None
     try:
         conn = get_db_connection()
@@ -426,7 +413,6 @@ def download_requisition_pdf(requisition_id):
         if not requisition:
             return jsonify({"message": "Requisition not found"}), 404
 
-        # Create PDF
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=12)
@@ -436,7 +422,6 @@ def download_requisition_pdf(requisition_id):
 
         req_dict = dict(requisition)
 
-        # Helper to add field to PDF (adjusting for potential datetime objects from PG)
         def add_field(label, value):
             display_value = value.isoformat() if isinstance(value, datetime.datetime) else str(value)
             pdf.set_font("Arial", 'B', 10)
