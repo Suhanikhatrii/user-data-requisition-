@@ -1,6 +1,7 @@
-Flask
-Flask-Cors
-fpdf
-Werkzeug
-gunicorn
-psycopg2-binary
+    Flask
+    Flask-Cors
+    fpdf2
+    Werkzeug
+    gunicorn
+    psycopg2-binary
+    
