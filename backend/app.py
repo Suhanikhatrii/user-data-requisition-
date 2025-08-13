@@ -255,8 +255,8 @@ def create_requisition():
         'status': 'pending_level2',
         'created_at': datetime.datetime.now(),
         # Generate title and description from existing fields if not directly provided
-        'title': data.get('title', f"Requisition for {data.get('basin')} - {data.get('area') or 'N/A'}"), # Ensure title exists
-        'description': data.get('description', data.get('objective')) # Ensure description exists
+        'title': data.get('title', f"Requisition for {data.get('basin')} - {data.get('area') or 'N/A'}"),
+        'description': data.get('description', data.get('objective'))
     }
 
     mandatory_fields = ['basin', 'user_cpf_no', 'user_mobile_no', 'user_group']
@@ -269,7 +269,6 @@ def create_requisition():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        # INSERT statement now includes 'title' and 'description'
         cursor.execute(
             """
             INSERT INTO requisitions (
@@ -280,7 +279,7 @@ def create_requisition():
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
-                req_id, requisition_data['title'], requisition_data['description'], # Included title and description
+                req_id, requisition_data['title'], requisition_data['description'],
                 requisition_data['requisition_date'], requisition_data['basin'],
                 requisition_data['block'], requisition_data['area'], requisition_data['dimension'],
                 requisition_data['return_date'], requisition_data['data_type'],
@@ -420,8 +419,9 @@ def download_requisition_pdf(requisition_id):
             display_value = value.isoformat() if isinstance(value, datetime.datetime) else str(value)
             pdf.set_font("Arial", 'B', 10)
             pdf.cell(0, 7, txt=f"{label}:", ln=0)
-            pdf.set_font("Arial", '', 10)
-            pdf.multi_cell(0, 7, txt=f"{display_value}", ln=True)
+            # FIX: Removed 'ln=True' from multi_cell
+            pdf.multi_cell(0, 7, txt=f"{display_value}") # Removed ln=True
+            pdf.ln(5) # Add a manual line break after each field if desired, or adjust multi_cell height/width
 
         add_field("Requisition ID", req_dict.get('id', 'N/A'))
         add_field("Date of Requisition", req_dict.get('requisition_date', 'N/A'))
